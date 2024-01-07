@@ -1,40 +1,47 @@
-import type { Logger, Plugin, ResolvedConfig } from "vite";
+import {
+  defineConfig,
+  type Logger,
+  type Plugin,
+  type ResolvedConfig,
+} from "vite";
 import { $ } from "execa";
 import fs from "fs-extra";
 import path from "path";
 import { load as jsTomlLoad } from "js-toml";
 
-export function vitePluginTrunk(vitePluginTruckConfig?: {
-  debug?: boolean;
-}): Plugin {
+function vitePluginTrunk(vitePluginTruckConfig?: { debug?: boolean }): Plugin {
   let config: ResolvedConfig;
   let logger: Logger;
   const name = "vite-plugin-trunk";
-  const filehash = true;
   const debug = Boolean(vitePluginTruckConfig?.debug);
 
-  const getTrunkCacheDir = () =>
+  const getTrunkDistDir = () =>
     // default to /node_modules/.vite/.trunk
     `${config.cacheDir}/.trunk`;
   const getTrunkDevArgs = () => [
     "--no-minification",
-    `--dist=${getTrunkCacheDir()}`,
+    `--dist=${getTrunkDistDir()}`,
     "--no-sri",
-    `--filehash=${filehash}`,
+    `--filehash=true`,
+  ];
+  const getTrunkProdArgs = () => [
+    "--release",
+    `--dist=${getTrunkDistDir()}`,
+    `--filehash=true`,
   ];
   const getTrunkCache = async () => {
-    const files = await fs.readdir(getTrunkCacheDir(), { withFileTypes: true });
+    const files = await fs.readdir(getTrunkDistDir(), { withFileTypes: true });
     const wasmFiles = files.filter((file) => file.name.endsWith(".wasm"));
     const jsFiles = files.filter((file) => file.name.endsWith(".js"));
     return { wasmFiles, jsFiles };
   };
   const getTrunkCacheJsSync = () => {
-    const files = fs.readdirSync(getTrunkCacheDir(), { withFileTypes: true });
+    const files = fs.readdirSync(getTrunkDistDir(), { withFileTypes: true });
     const jsFiles = files.filter((file) => file.name.endsWith(".js"));
     return jsFiles;
   };
   const getTrunkCacheWasmSync = () => {
-    const files = fs.readdirSync(getTrunkCacheDir(), { withFileTypes: true });
+    const files = fs.readdirSync(getTrunkDistDir(), { withFileTypes: true });
     const wasmFiles = files.filter((file) => file.name.endsWith(".wasm"));
     return wasmFiles;
   };
@@ -112,12 +119,26 @@ export function vitePluginTrunk(vitePluginTruckConfig?: {
       return html;
     },
     async buildStart() {
-      await fs.ensureDir(getTrunkCacheDir());
-      await $`trunk build ${getTrunkDevArgs()}`;
-      logger.info(`trunk build successfully on start`, { timestamp: true });
+      // build wasm modules before dev server start
+      if (config.command === "serve") {
+        await fs.ensureDir(getTrunkDistDir());
+        logger.info(
+          `trunk building wasm modules (can be slow on first start)`,
+          { timestamp: true },
+        );
+        await $`trunk build ${getTrunkDevArgs()}`;
+        logger.info(`🦀 trunk successfully built wasm on start`, {
+          timestamp: true,
+          clear: true,
+        });
+      }
     },
     async handleHotUpdate({ file, modules, server }) {
-      if (file.indexOf(".rs") > 0) {
+      // include .rs files and exclude files in target directory
+      if (file.indexOf(".rs") > 0 && file.indexOf("target") < 0) {
+        if (debug) {
+          console.debug(`[${name}] recompiling ${file}`);
+        }
         try {
           await $`trunk build ${getTrunkDevArgs()}`;
           logger.info(`${file} recompiled successfully.`, { timestamp: true });
@@ -165,7 +186,7 @@ export function vitePluginTrunk(vitePluginTruckConfig?: {
                 "no-cache, no-store, must-revalidate",
               );
               res.writeHead(200, { "Content-Type": "application/wasm" });
-              res.end(fs.readFileSync(`${getTrunkCacheDir()}/${wasmName}`));
+              res.end(fs.readFileSync(`${getTrunkDistDir()}/${wasmName}`));
               next();
             }
           }
@@ -187,7 +208,7 @@ export function vitePluginTrunk(vitePluginTruckConfig?: {
                 "no-cache, no-store, must-revalidate",
               );
               res.writeHead(200, { "Content-Type": "application/javascript" });
-              res.end(fs.readFileSync(`${getTrunkCacheDir()}/${jsName}`));
+              res.end(fs.readFileSync(`${getTrunkDistDir()}/${jsName}`));
               next();
             }
           }
@@ -195,5 +216,54 @@ export function vitePluginTrunk(vitePluginTruckConfig?: {
         });
       };
     },
+    async closeBundle() {
+      // copy all files from trunk cache to dist directory
+      if (config.command === "build") {
+        logger.info(`🦀 copying intermediate artifact _index.html`, {
+          timestamp: true,
+        });
+        await fs.copyFile(`${config.build.outDir}/index.html`, `_index.html`);
+        logger.info(`🦀 trunk creating production build...`, {
+          timestamp: true,
+        });
+        await $`trunk build ${getTrunkProdArgs()} _index.html`;
+        logger.info(`🦀 removing intermediate artifact _index.html`, {
+          timestamp: true,
+        });
+        await fs.remove("_index.html");
+        logger.info(`🦀 copying built index.html to ${config.build.outDir}`, {
+          timestamp: true,
+        });
+        await fs.copyFile(
+          `${getTrunkDistDir()}/index.html`,
+          `${config.build.outDir}/index.html`,
+        );
+        const { wasmFiles, jsFiles } = await getTrunkCache();
+        for (const wasmFile of wasmFiles) {
+          logger.info(`🦀 copying built wasm to ${config.build.outDir}`, {
+            timestamp: true,
+          });
+          await fs.copyFile(
+            `${getTrunkDistDir()}/${wasmFile.name}`,
+            `${config.build.outDir}/${wasmFile.name}`,
+          );
+        }
+        for (const jsFile of jsFiles) {
+          logger.info(`🦀 copying built js to ${config.build.outDir}`, {
+            timestamp: true,
+          });
+          await fs.copyFile(
+            `${getTrunkDistDir()}/${jsFile.name}`,
+            `${config.build.outDir}/${jsFile.name}`,
+          );
+        }
+        logger.info(`🦀 trunk successfully built wasm modules`, { timestamp: true });
+      }
+    },
   };
 }
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [vitePluginTrunk()],
+});
