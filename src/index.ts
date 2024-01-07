@@ -4,7 +4,9 @@ import fs from "fs-extra";
 import path from "path";
 import { load as jsTomlLoad } from "js-toml";
 
-export function vitePluginTrunk(vitePluginTruckConfig?: { debug?: boolean }): Plugin {
+export function vitePluginTrunk(vitePluginTruckConfig?: {
+  debug?: boolean;
+}): Plugin {
   let config: ResolvedConfig;
   let logger: Logger;
   const name = "vite-plugin-trunk";
@@ -54,8 +56,10 @@ export function vitePluginTrunk(vitePluginTruckConfig?: { debug?: boolean }): Pl
         cargoPackageName = cargoToml.package.name;
         return {};
       } catch (error) {
-        throw new Error("Can't find Cargo.toml at project root", { cause: error })
-      } 
+        throw new Error("Can't find Cargo.toml at project root", {
+          cause: error,
+        });
+      }
     },
     configResolved(resolvedConfig) {
       config = resolvedConfig;
