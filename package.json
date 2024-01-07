@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-trunk",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Seamlessly embedding WASM components in a Vite project via Trunk.",
   "repository": "https://github.com/chenhunghan/vite-plugin-trunk",
   "author": "Hung-Han Chen <chenhungh@gmail.com>",
