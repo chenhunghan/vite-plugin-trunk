@@ -1,15 +1,12 @@
-import {
-  defineConfig,
-  type Logger,
-  type Plugin,
-  type ResolvedConfig,
-} from "vite";
+import { type Logger, type Plugin, type ResolvedConfig } from "vite";
 import { $ } from "execa";
 import fs from "fs-extra";
 import path from "path";
 import { load as jsTomlLoad } from "js-toml";
 
-function vitePluginTrunk(vitePluginTruckConfig?: { debug?: boolean }): Plugin {
+export function vitePluginTrunk(vitePluginTruckConfig?: {
+  debug?: boolean;
+}): Plugin {
   let config: ResolvedConfig;
   let logger: Logger;
   const name = "vite-plugin-trunk";
@@ -257,13 +254,10 @@ function vitePluginTrunk(vitePluginTruckConfig?: { debug?: boolean }): Plugin {
             `${config.build.outDir}/${jsFile.name}`,
           );
         }
-        logger.info(`🦀 trunk successfully built wasm modules`, { timestamp: true });
+        logger.info(`🦀 trunk successfully built wasm modules`, {
+          timestamp: true,
+        });
       }
     },
   };
 }
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [vitePluginTrunk()],
-});
