@@ -1,0 +1,51 @@
+{
+  "name": "vite-plugin-trunk",
+  "version": "0.0.1",
+  "description": "Seamlessly embedding WASM components in a Vite project via Trunk.",
+  "repository": "https://github.com/chenhunghan/vite-plugin-trunk",
+  "author": "Hung-Han Chen <chenhungh@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LCIENSE",
+    "README.md"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js",
+    "require": "./dist/index.js"
+  },
+  "scripts": {
+    "prepublishOnly": "pnpm run build",
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "watch": "tsup src/index.ts --watch --format esm --dts --clean",
+    "ts:check": "tsc --noEmit",
+    "format": "prettier --write \"./**/*.{js,ts,json,html}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"./**/*.{js,ts,json,html}\" --ignore-path .gitignore",
+    "deps:up": "pnpm dlx taze latest -w -i"
+  },
+  "dependencies": {
+    "execa": "^8.0.1",
+    "fs-extra": "^11.2.0",
+    "js-toml": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.10.6",
+    "prettier": "^3.1.1",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11"
+  },
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "truck",
+    "wasm",
+    "leptos"
+  ]
+}
