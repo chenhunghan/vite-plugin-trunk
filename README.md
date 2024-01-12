@@ -90,3 +90,20 @@ export default defineConfig({
   plugins: [vue(), vitePluginTrunk()],
 })
 ```
+
+### With tailwind
+
+Follow <https://tailwindcss.com/docs/guides/vite> and include `.rs` in your `./tailwind.config.js`
+```js
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx,rs}", // include rs!
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
