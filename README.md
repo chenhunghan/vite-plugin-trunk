@@ -9,6 +9,13 @@ export default defineConfig({
 })
 ```
 
+## Quick start
+
+Using a starter template [vite-leptos-template](https://github.com/chenhunghan/vite-leptos-template)
+```sh
+npx degit chenhunghan/vite-leptos-template my-project
+```
+
 ## Get started by frameworks
 
 ### React + [Leptos](https://leptos.dev/)
