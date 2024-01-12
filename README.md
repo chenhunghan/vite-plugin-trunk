@@ -11,7 +11,7 @@ export default defineConfig({
 
 ## Quick start
 
-Using a starter template [vite-leptos-template](https://github.com/chenhunghan/vite-leptos-template)
+Using a [Leptos](https://leptos.dev/) starter template [vite-leptos-template](https://github.com/chenhunghan/vite-leptos-template)
 ```sh
 npx degit chenhunghan/vite-leptos-template my-project
 ```
