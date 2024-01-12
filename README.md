@@ -9,7 +9,7 @@ export default defineConfig({
 })
 ```
 
-## Get started
+## Get started by frameworks
 
 ### React + [Leptos](https://leptos.dev/)
 
@@ -78,4 +78,15 @@ You should see both Vite + React logos, and "Hello Leptos" on the screen.
 Production build
 ```
 npm run build
+```
+
+### Vue + [Leptos](https://leptos.dev/)
+
+```ts
+import { vitePluginTrunk } from "vite-plugin-trunk"
+import vue from "@vitejs/plugin-vue"
+
+export default defineConfig({
+  plugins: [vue(), vitePluginTrunk()],
+})
 ```
